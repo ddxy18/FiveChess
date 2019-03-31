@@ -451,6 +451,7 @@ void MyMainWindow::endWin(int i)
     for(int i=0;i<17;++i)
         for(int j=0;j<17;++j) chessboard[i][j]=0;
     player=1;
+    sumBlack=0;
     crossx=0;
     crossy=0;
     ++total;
