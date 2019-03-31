@@ -62,6 +62,7 @@ void MyMainWindow::paintEvent(QPaintEvent *)
         {
             brush.setColor(QColor(Qt::red));
             paint.setBrush(brush);
+            paint.setRenderHint(QPainter::Antialiasing);
             paint.drawEllipse(crossx*40+35,crossy*40+35,10,10);
             movemouse=0;
         }
