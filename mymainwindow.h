@@ -30,6 +30,7 @@ protected:
     void paintEvent(QPaintEvent *); //绘图
     void mouseMoveEvent(QMouseEvent *); //实时反映鼠标移动情况
     void mouseReleaseEvent(QMouseEvent *); //鼠标控制落子
+
 private:
     Ui::MyMainWindow *ui;
     const int Limit1=40;
@@ -41,7 +42,10 @@ private:
     int total=0;
     int totalWin=0; //记录赢的总次数
     int sumBlack=0; //记录玩家落子次数
+    QPoint lastBlack,lastWhite; //记录上一次落子，用于悔棋
 public slots:
+private slots:
+    void on_regret_clicked();
 };
 
 #endif // MYMAINWINDOW_H

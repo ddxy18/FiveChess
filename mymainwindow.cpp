@@ -8,6 +8,7 @@
 #include<QDialogButtonBox>
 #include<QTextBrowser>
 #include<QLabel>
+#include<QPixmap>
 
 enum chesskind {EMPTY,BLACK,WHITE}; //玩家黑棋，电脑白棋
 int chessboard[17][17]={0}; //棋盘
@@ -18,9 +19,11 @@ MyMainWindow::MyMainWindow(QWidget *parent) :
     ui(new Ui::MyMainWindow)
 {
     ui->setupUi(this);
+    ui->regret->setVisible(false);
+    ui->regret->move(690,500);
     for(int i=0;i<17;++i)
         for(int j=0;j<17;++j) chessboard[i][j]=0;
-    setFixedSize(720,720);
+    setFixedSize(820,690);
     setMouseTracking(true);
     ui->centralWidget->setMouseTracking(true);
     connect(ui->help,&QAction::triggered,this,&MyMainWindow::help);
@@ -41,9 +44,21 @@ MyMainWindow::~MyMainWindow()
 
 void MyMainWindow::paintEvent(QPaintEvent *)
 {
-    if(isplay==0) return;
+    if(isplay==0)
+    {
+        ui->regret->setVisible(false);
+        ui->NewGame->setVisible(true);
+        QPainter painter(this);
+        QPixmap pix;
+        pix.load(":/myImage/de21c7d03f93e8705336297a28bddb78.jpg");
+        painter.drawPixmap(0,0,820,730,pix);
+        return;
+    }
+
     if(isplay==1)
     {
+        ui->regret->setVisible(true);
+        ui->NewGame->setVisible(false);
         QPalette palette;
         palette.setColor(QPalette::Background,QColor("#B1723C"));
         setPalette(palette); //设置背景色为黄色
@@ -62,7 +77,6 @@ void MyMainWindow::paintEvent(QPaintEvent *)
         {
             brush.setColor(QColor(Qt::red));
             paint.setBrush(brush);
-            paint.setRenderHint(QPainter::Antialiasing);
             paint.drawEllipse(crossx*40+35,crossy*40+35,10,10);
             movemouse=0;
         }
@@ -87,6 +101,7 @@ void MyMainWindow::paintEvent(QPaintEvent *)
                     brush.setStyle(Qt::SolidPattern);
                     brush.setColor(QColor(Qt::white));
                     paint.setBrush(brush);
+                    paint.setPen(Qt::white);
                     paint.drawEllipse(40*i+27.5,40*j+27.5,25,25);
                 }
 
@@ -123,7 +138,7 @@ void MyMainWindow::help()
     helpwindow.setFixedSize(250,120);
     QTextBrowser *textbrowser=new QTextBrowser(&helpwindow);
     textbrowser->setFixedSize(250,120);
-    textbrowser->setText("黑白双方依次落子,由黑先下,也可以不交换,主动权在白方!然后继续下棋,任一方先在棋盘上形成横向、竖向、斜向的连续的相同颜色的五个(含五个以上)棋子的一方为胜");
+    textbrowser->setText("你将使用黑子,黑白双方依次落子,由黑先下,然后继续下棋,任一方先在棋盘上形成横向、竖向、斜向的连续的相同颜色的五个(含五个以上)棋子的一方为胜");
     QDialogButtonBox *button=new QDialogButtonBox(&helpwindow);
     button->addButton("OK",QDialogButtonBox::YesRole);
     button->move(90,90);
@@ -134,9 +149,10 @@ void MyMainWindow::help()
 void MyMainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
     int tmp=sumBlack;
-    if(player==1&&chessboard[crossx][crossy]==EMPTY&&(event->button()==Qt::LeftButton||event->button()==Qt::RightButton))
+    if(isplay==1&&player==1&&chessboard[crossx][crossy]==EMPTY&&(event->button()==Qt::LeftButton||event->button()==Qt::RightButton))
         {
             chessboard[crossx][crossy]=1;
+            lastBlack=QPoint(crossx,crossy);
             sumBlack++;
         }
     end();
@@ -144,7 +160,7 @@ void MyMainWindow::mouseReleaseEvent(QMouseEvent *event)
     update();
 }
 
-int MyMainWindow::FiveInLine(int x,int y)
+int MyMainWindow::FiveInLine(int x,int y) //0--继续，1--玩家赢，2--电脑赢，3--平局
 {
     int sum1=-1,sum2=0;
     for(int i=0;i<5;++i)
@@ -251,6 +267,15 @@ int MyMainWindow::FiveInLine(int x,int y)
     if(sum1+sum2==5) return 2;
     else {sum1=-1;sum2=0;}
 
+    int ocuppied=0;
+    for (int i=0;i<17;++i)
+    {
+        for(int j=0;j<17;++j)
+            {
+                if(chessboard[i][j]!=0) ocuppied++;
+            }
+    }
+    if(ocuppied==288) return 3;
     return 0;
 }
 
@@ -260,7 +285,7 @@ int MyMainWindow::isFiveInLine()
         for(int j=0;j<17;++j)
             {
                 int k=FiveInLine(i,j);
-                if(k==1||k==2) return k;
+                if(k!=0) return k;
             }
     return 0;
 }
@@ -278,6 +303,7 @@ void MyMainWindow::AIPlay()
                 maxy=j;
             }
     chessboard[maxx][maxy]=WHITE;
+    lastWhite=QPoint(maxx,maxy);
     player=1;
     end();
 }
@@ -429,6 +455,7 @@ void MyMainWindow::endWin(int i)
         ++totalWin;
     }
     else if(i==2) label->setText("你输了");
+    else if(i==3) label->setText("平局");
     QDialogButtonBox *button1=new QDialogButtonBox(dialog);
     button1->addButton("再来一局",QDialogButtonBox::YesRole);
     button1->move(30,60);
@@ -499,4 +526,12 @@ void MyMainWindow::totalInformation()
     }
     );
     dialog->exec();
+}
+
+void MyMainWindow::on_regret_clicked()
+{
+    chessboard[lastBlack.x()][lastBlack.y()]=0;
+    chessboard[lastWhite.x()][lastWhite.y()]=0;
+    --sumBlack;
+    update();
 }
